@@ -60,6 +60,8 @@ func (s *Server) handleConn(conn *net.UDPConn) {
 	newLine := []byte("\n")
 	buffer := make([]byte, 1024)
 
+	// read data from conn onto our buffer up
+	// n is an int of the number of bytes read
 	n, _, err := conn.ReadFromUDP(buffer)
 	if err != nil {
 		log.Printf("error %e", err)

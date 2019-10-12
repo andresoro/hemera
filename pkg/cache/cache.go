@@ -21,8 +21,20 @@ type Cache struct {
 	badMetrics int64
 }
 
+// New - return a fresh cache
 func New() *Cache {
-	return &Cache{}
+	c := &Cache{
+		counters: make(map[string]float64, 0),
+		gauges:   make(map[string]float64, 0),
+		timers:   make(map[string][]float64, 0),
+		sets:     make(map[string]map[int64]struct{}),
+
+		timerData:  make(map[string]float64),
+		seen:       int64(0),
+		badMetrics: int64(0),
+	}
+
+	return c
 }
 
 // Add handles a metric and increments or adds to the bucket
@@ -30,6 +42,7 @@ func (c *Cache) Add(m *metric.Metric) error {
 
 	c.seen++
 
+	// handle each metric type
 	switch m.Type {
 	case metric.Counter:
 		name := m.Name
@@ -74,4 +87,9 @@ func (c *Cache) Add(m *metric.Metric) error {
 	}
 
 	return nil
+}
+
+// Clear - Set this cache to be a fresh cache with no entries
+func (c *Cache) Clear() {
+	c = New()
 }
