@@ -14,10 +14,10 @@ var ErrInvalidType = errors.New("metric type is not supported")
 type mtype int
 
 const (
-	Counter mtype = iota
-	Gauge   mtype = iota
-	Set     mtype = iota
-	Timer   mtype = iota
+	Counter mtype = iota + 1
+	Gauge
+	Set
+	Timer
 )
 
 // Metric is a published client event
