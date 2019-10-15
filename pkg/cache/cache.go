@@ -2,6 +2,7 @@ package cache
 
 import (
 	"math"
+	"sync"
 
 	"github.com/andresoro/hemera/pkg/metric"
 )
@@ -91,5 +92,39 @@ func (c *Cache) Add(m *metric.Metric) error {
 
 // Clear - Set this cache to be a fresh cache with no entries
 func (c *Cache) Clear() {
-	c = New()
+	var wg sync.WaitGroup
+
+	wg.Add(1)
+	go func() {
+		for k := range c.counters {
+			delete(c.counters, k)
+		}
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		for k := range c.gauges {
+			delete(c.gauges, k)
+		}
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		for k := range c.sets {
+			delete(c.sets, k)
+		}
+		wg.Done()
+	}()
+
+	wg.Add(1)
+	go func() {
+		for k := range c.timers {
+			delete(c.timers, k)
+		}
+		wg.Done()
+	}()
+
+	wg.Wait()
 }
