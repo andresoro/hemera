@@ -12,15 +12,15 @@ import (
 )
 
 type Server struct {
-	host    string
-	port    string
-	udpAddr *net.UDPAddr
-	cache   *cache.Cache
-	backend backend.Backend
-	purge   time.Duration
+	host     string
+	port     string
+	udpAddr  *net.UDPAddr
+	cache    *cache.Cache
+	backends []backend.Backend
+	purge    time.Duration
 }
 
-func New(be backend.Backend, purge time.Duration, host, port string) (*Server, error) {
+func New(purge time.Duration, host string, port string, be ...backend.Backend) (*Server, error) {
 
 	service := host + ":" + port
 	addr, err := net.ResolveUDPAddr("udp4", service)
@@ -31,12 +31,12 @@ func New(be backend.Backend, purge time.Duration, host, port string) (*Server, e
 	c := cache.New()
 
 	server := &Server{
-		host:    host,
-		port:    port,
-		udpAddr: addr,
-		cache:   c,
-		backend: be,
-		purge:   purge,
+		host:     host,
+		port:     port,
+		udpAddr:  addr,
+		cache:    c,
+		backends: be,
+		purge:    purge,
 	}
 
 	return server, nil
@@ -60,7 +60,14 @@ func (s *Server) Run() {
 		for {
 			select {
 			case <-ticker.C:
-				s.backend.Purge(s.cache)
+				for _, back := range s.backends {
+					err := back.Purge(s.cache)
+					if err != nil {
+						log.Fatal(err)
+					}
+
+				}
+				s.cache.Clear()
 			case <-quit:
 				ticker.Stop()
 			}
