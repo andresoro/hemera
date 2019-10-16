@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"log"
 	"net"
+	"time"
 
 	"github.com/andresoro/hemera/pkg/backend"
 	"github.com/andresoro/hemera/pkg/cache"
@@ -16,12 +17,12 @@ type Server struct {
 	udpAddr *net.UDPAddr
 	cache   *cache.Cache
 	backend backend.Backend
+	purge   time.Duration
 }
 
-func New(be backend.Backend, host, port string) (*Server, error) {
+func New(be backend.Backend, purge time.Duration, host, port string) (*Server, error) {
 
 	service := host + ":" + port
-
 	addr, err := net.ResolveUDPAddr("udp4", service)
 	if err != nil {
 		return nil, err
@@ -35,6 +36,7 @@ func New(be backend.Backend, host, port string) (*Server, error) {
 		udpAddr: addr,
 		cache:   c,
 		backend: be,
+		purge:   purge,
 	}
 
 	return server, nil
@@ -43,13 +45,29 @@ func New(be backend.Backend, host, port string) (*Server, error) {
 // Run UDP server on given addr
 func (s *Server) Run() {
 
+	// init server
 	ln, err := net.ListenUDP("udp", s.udpAddr)
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Listening for packets on port %s \n", s.port)
+	log.Printf("Listening for packets on port %s \n", s.udpAddr.String())
 	defer ln.Close()
 
+	// purge cache to backend on a given interval
+	ticker := time.NewTicker(s.purge)
+	quit := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				s.backend.Purge(s.cache)
+			case <-quit:
+				ticker.Stop()
+			}
+		}
+	}()
+
+	// handle UDP packets
 	for {
 		s.handleConn(ln)
 	}
