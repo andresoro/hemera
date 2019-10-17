@@ -63,7 +63,7 @@ func (s *Server) Run() {
 				for _, back := range s.backends {
 					err := back.Purge(s.cache)
 					if err != nil {
-						log.Fatal(err)
+						log.Print(err)
 					}
 
 				}
