@@ -61,6 +61,23 @@ func (g *Graphite) Purge(c *cache.Cache) error {
 		}
 	}
 
+	for name, value := range c.TimerData {
+		fullName := fmt.Sprintf("%s.%s.%s", PREFIX, TIMER, name)
+		metric := metricString(fullName, value, now)
+		_, err := buffer.WriteString(metric)
+		if err != nil {
+			return err
+		}
+	}
+
+	seen := fmt.Sprintf("%s.seen", PREFIX)
+	seenMetric := metricString(seen, float64(c.Seen), now)
+
+	_, err := buffer.WriteString(seenMetric)
+	if err != nil {
+		return err
+	}
+
 	// dial graphite server
 	conn, err := net.Dial("tcp", g.Addr)
 	if err != nil {
@@ -78,6 +95,7 @@ func (g *Graphite) Purge(c *cache.Cache) error {
 	return nil
 }
 
+// convert metric to a string that graphite can understand
 func metricString(name string, value float64, date int64) string {
 	return fmt.Sprintf("%s %f %d \n", name, value, date)
 }

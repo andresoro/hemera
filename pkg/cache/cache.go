@@ -20,8 +20,8 @@ type Cache struct {
 	Sets     map[string]map[int64]struct{}
 
 	// meta data on cache and Timers
-	timerData  map[string]float64
-	seen       int64
+	TimerData  map[string]float64
+	Seen       int64
 	badMetrics int64
 }
 
@@ -33,7 +33,7 @@ func New() *Cache {
 		Timers:   make(map[string][]float64, 0),
 		Sets:     make(map[string]map[int64]struct{}),
 
-		seen:       int64(0),
+		Seen:       int64(0),
 		badMetrics: int64(0),
 	}
 
@@ -43,7 +43,7 @@ func New() *Cache {
 // Add handles a metric and increments or adds to the bucket
 func (c *Cache) Add(m *metric.Metric) error {
 
-	c.seen++
+	c.Seen++
 
 	// handle each metric type
 	switch m.Type {
@@ -95,7 +95,7 @@ func (c *Cache) Add(m *metric.Metric) error {
 // Clear - Set this cache to be a fresh cache with no entries
 func (c *Cache) Clear() {
 
-	c.seen = 0
+	c.Seen = 0
 	c.badMetrics = 0
 
 	var wg sync.WaitGroup
@@ -163,7 +163,7 @@ func (c *Cache) TimerStats() {
 		timerData[fmt.Sprintf("%s.upper_95", metric)] = upper95
 	}
 
-	c.timerData = timerData
+	c.TimerData = timerData
 }
 
 // CountersJSON returns json encoded bytes of counters map
@@ -180,7 +180,7 @@ func (c *Cache) CountersJSON() ([]byte, error) {
 func (c *Cache) TimersJSON() ([]byte, error) {
 	c.TimerStats()
 
-	b, err := json.Marshal(c.timerData)
+	b, err := json.Marshal(c.TimerData)
 	if err != nil {
 		return nil, err
 	}
