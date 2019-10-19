@@ -31,9 +31,9 @@ func TestCache(t *testing.T) {
 
 		c.Clear()
 
-		if len(c.counters) != 0 {
-			t.Logf("counter has %d elements", len(c.counters))
-			t.Log(c.counters)
+		if len(c.Counters) != 0 {
+			t.Logf("counter has %d elements", len(c.Counters))
+			t.Log(c.Counters)
 			t.Fatal("Counters should have no elements after clear")
 		}
 
@@ -58,13 +58,13 @@ func TestCache(t *testing.T) {
 		c.TimerStats()
 
 		// get differences between computed and actual values
-		minDiff := math.Abs(c.timerData["test.min"] - 1.0)
-		maxDiff := math.Abs(c.timerData["test.max"] - 5.0)
-		countDiff := math.Abs(c.timerData["test.count"] - 5.0)
-		avgDiff := math.Abs(c.timerData["test.average"] - 3.0)
-		stdDiff := math.Abs(c.timerData["test.std_dev"] - math.Sqrt(2.0))
-		medDiff := math.Abs(c.timerData["test.median"] - 3.0)
-		upperDiff := math.Abs(c.timerData["test.upper_95"] - 5.0)
+		minDiff := math.Abs(c.TimerData["test.min"] - 1.0)
+		maxDiff := math.Abs(c.TimerData["test.max"] - 5.0)
+		countDiff := math.Abs(c.TimerData["test.count"] - 5.0)
+		avgDiff := math.Abs(c.TimerData["test.average"] - 3.0)
+		stdDiff := math.Abs(c.TimerData["test.std_dev"] - math.Sqrt(2.0))
+		medDiff := math.Abs(c.TimerData["test.median"] - 3.0)
+		upperDiff := math.Abs(c.TimerData["test.upper_95"] - 5.0)
 
 		// ensure error is within a small bound
 		if minDiff > EPSILON {

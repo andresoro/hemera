@@ -27,6 +27,10 @@ type Graphite struct {
 func (g *Graphite) Purge(c *cache.Cache) error {
 	now := time.Now().Unix()
 
+	if c.Seen == 0 {
+		return nil
+	}
+
 	// concatenated buffer to hold all metrics
 	var buffer strings.Builder
 

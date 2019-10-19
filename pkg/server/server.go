@@ -50,7 +50,6 @@ func (s *Server) Run() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	log.Printf("Listening for packets on port %s \n", s.udpAddr.String())
 	defer ln.Close()
 
 	// purge cache to backend on a given interval
