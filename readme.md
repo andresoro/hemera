@@ -132,6 +132,8 @@ func (cb *ConsoleBackend) Purge(c *cache.Cache) error {
 }
 ```
 
+Remember while the `cache.Timers` map holds raw timer metrics, the statistics (min,max, std dev, etc) comes from calling `cache.TimerStats()` and getting values from the `cache.TimerData` map. 
+
 Take a look at the [graphite implementation](https://github.com/andresoro/hemera/blob/master/pkg/backend/graphite.go) for a more robust example.
 
 ## Using new backend interfaces
@@ -160,3 +162,4 @@ srv.Run()
 
 * Add support for incrementing/decrementing gauges with '+' or '-' signs in metric value. 
 * Benchmark tests
+* Better logging
