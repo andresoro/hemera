@@ -4,11 +4,12 @@
 
 ## Documentation
 
-* Installing hemera
-* Basic usage
-* Supported metrics
-* Creating/using new backend interfaces
-* Future plans
+* [Installing hemera](#installing-Hemera)
+* [Basic usage](#basic-usage)
+* [Supported metrics](#supported-metrics)
+* [Creating new backend interfaces](#creating-new-backend-interfaces)
+* [Using new backend interfaces](#using-new-backend-interfaces)
+* [To Do](#to-do)
 
 ## Installing hemera
 
@@ -41,21 +42,23 @@ This will start the server with default configuration with the following flags b
 
 
 ```sh
+# listen for metrics on port 8000 and purge to backend every 5 seconds
 hemera -p 8000 -t 5
 ```
 
 
 ## Supported metrics
 
-hemera supports the four metrics that statsd supports. They are of the following form where bucket represents the name metric to update. 
+hemera supports the four metrics that statsd supports. They are of the following form where bucket represents the name of the metric to update. 
 
 ` <bucket>:<value>|<metric-type>|@<sampling-rate>` 
 
 ### Counters
 
-Counters represent metrics that can only increase. During each purge cycle the counter is reset to 0. For example, the following packet will increment the 'button' counter by 2. 
+Counters represent metrics that can only be incremented. During each purge cycle the counter is reset to 0. 
 
 ```sh
+# increment the 'button' bucket by 2
 button:2|c
 ```
 
@@ -98,3 +101,62 @@ Timers currently only support the `ms` metric tag.
 load-time:225|ms
 ```
 
+## Creating new backend interfaces
+
+Backends must simply satisfy the following interface:
+
+``` go
+type Backend interface {
+    Purge(c *cache.Cache) error
+}
+```
+
+It is up to the user to decide how to purge the actual values out. The `cache.Cache` struct exports all the values that are currently held since last purge cycle.
+
+Warning: Do not clear the cache from the Purge() function as it is done by the server. Would cause issues when using multiple backends. 
+
+For example, a backend implementation where we only purge counters to the standard output would look like this. 
+
+```go
+type ConsoleBackend struct{}
+
+// implement backend interface
+func (cb *ConsoleBackend) Purge(c *cache.Cache) error {
+
+    // only handling counters
+    for name, value := range c.Counters {
+        fmt.Printf("counter name: %s value: %f \n", name, value)
+    }
+
+    return nil
+}
+```
+
+Take a look at the [graphite implementation](https://github.com/andresoro/hemera/blob/master/pkg/backend/graphite.go) for a more robust example.
+
+## Using new backend interfaces
+
+The server takes care of the cache and metric collection. If you want to use a new backend interface simply define it and add it to a new server instance. The `server.New()` function can take in a variadic amount of backends.
+
+
+```go
+import github.com/andresoro/hemera/pkg/backend
+import github.com/andresoro/hemera/pkg/server
+
+// import a backend from the hemera backend package
+graphite := &backend.Graphite{Addr: "localhost:2003"}
+
+// and use a backend you implemented
+console := &ConsoleBackend{}
+
+// new server with given purge interval, host/port, and the backends that we would like to purge to. 
+srv, err := server.New(purgeTime, host, port, graphite, console)
+
+srv.Run()
+```
+
+
+## To Do
+
+* Add support for incrementing/decrementing gauges with '+' or '-' signs in metric value. 
+* Benchmark tests
