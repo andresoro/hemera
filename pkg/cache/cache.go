@@ -136,7 +136,7 @@ func (c *Cache) Clear() {
 }
 
 // TimerStats will aggregate all the Timers and compute individual statistics
-func (c *Cache) TimerStats() {
+func (c *Cache) TimerStats() map[string]float64 {
 	timerData := make(map[string]float64)
 	var sum float64
 
@@ -164,6 +164,8 @@ func (c *Cache) TimerStats() {
 	}
 
 	c.TimerData = timerData
+
+	return timerData
 }
 
 // CountersJSON returns json encoded bytes of counters map

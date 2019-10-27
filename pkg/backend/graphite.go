@@ -64,8 +64,9 @@ func (g *Graphite) Purge(c *cache.Cache) error {
 			return err
 		}
 	}
-
-	for name, value := range c.TimerData {
+	// need to call timerstats to aggregate timer metrics
+	stats := c.TimerStats()
+	for name, value := range stats {
 		fullName := fmt.Sprintf("%s.%s.%s", PREFIX, TIMER, name)
 		metric := metricString(fullName, value, now)
 		_, err := buffer.WriteString(metric)

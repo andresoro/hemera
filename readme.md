@@ -96,6 +96,8 @@ Timers generate an array of statistics that are purged to the backend:
 
 Timers currently only support the `ms` metric tag.
 
+Hemera has two timer metrics. First is the raw input metrics under `cache.Timers` and the second is the computed metric statistics in this form `<metric-name>.min.<value>` which is returned by `cache.TimerStats()`.
+
 ```sh
 # load-time took 225ms to complete this time
 load-time:225|ms
@@ -163,3 +165,4 @@ srv.Run()
 * Add support for incrementing/decrementing gauges with '+' or '-' signs in metric value. 
 * Benchmark tests
 * Better logging
+* Full testing
