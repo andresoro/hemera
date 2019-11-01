@@ -10,6 +10,8 @@ import (
 var ErrPacketMismatch = errors.New("packet does not match desired format")
 var ErrInvalidType = errors.New("metric type is not supported")
 
+var re = regexp.MustCompile(`\A(?P<name>[\w\.]+):((?P<sign>\-|\+))?(?P<val>([0-9]*[.])?[0-9]+)\|(?P<type>\w+)(\|@(?P<rate>\d+\.\d+))?`)
+
 // metric type
 type mtype int
 
@@ -30,8 +32,6 @@ type Metric struct {
 
 // Parse a byte array (from UDP packet) into a metric or return an error
 func Parse(packet []byte) (*Metric, error) {
-
-	re := regexp.MustCompile(`\A(?P<name>[\w\.]+):((?P<sign>\-|\+))?(?P<val>([0-9]*[.])?[0-9]+)\|(?P<type>\w+)(\|@(?P<rate>\d+\.\d+))?`)
 
 	if !re.Match(packet) {
 		return nil, ErrPacketMismatch
