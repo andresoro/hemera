@@ -21,7 +21,6 @@ type Server struct {
 }
 
 func New(purge time.Duration, host string, port string, be ...backend.Backend) (*Server, error) {
-
 	service := host + ":" + port
 	addr, err := net.ResolveUDPAddr("udp4", service)
 	if err != nil {
@@ -44,7 +43,6 @@ func New(purge time.Duration, host string, port string, be ...backend.Backend) (
 
 // Run UDP server on given addr
 func (s *Server) Run() {
-
 	// init server
 	ln, err := net.ListenUDP("udp", s.udpAddr)
 	if err != nil {
@@ -64,7 +62,6 @@ func (s *Server) Run() {
 					if err != nil {
 						log.Print(err)
 					}
-
 				}
 				s.cache.Clear()
 			case <-quit:
@@ -77,7 +74,6 @@ func (s *Server) Run() {
 	for {
 		s.handleConn(ln)
 	}
-
 }
 
 func (s *Server) handleConn(conn *net.UDPConn) {
@@ -111,5 +107,4 @@ func (s *Server) handleConn(conn *net.UDPConn) {
 			s.cache.Add(m)
 		}
 	}
-
 }

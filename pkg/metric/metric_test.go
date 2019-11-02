@@ -17,18 +17,18 @@ func TestMetricMatch(t *testing.T) {
 	}
 
 	if metric.Name != "performance.os.disk" {
-		t.Errorf("metric name not correct \n wanted: %s \n got: %s", "performance.os.disk", metric.Name)
+		t.Errorf("metric name not correct: want: %s, got: %s", "performance.os.disk", metric.Name)
 	}
 
-	if metric.Value != float64(1099511627776) {
-		t.Errorf("metric value not correct \n wanted %f \n got %f", float64(1099511627776), metric.Value)
+	if metric.Value != 1099511627776 {
+		t.Errorf("metric value not correct:  want %f, got %f", 1099511627776., metric.Value)
 	}
 
 	if metric.Type != Gauge {
 		t.Error("incorrect type")
 	}
 
-	if metric.Rate != float64(0.2) {
+	if metric.Rate != 0.2 {
 		t.Error("incorrect rate")
 	}
 }

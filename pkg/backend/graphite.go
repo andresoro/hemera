@@ -11,22 +11,23 @@ import (
 )
 
 const (
-	PREFIX  = "hemera"
-	COUNTER = "counters"
-	GAUGE   = "gauges"
-	SET     = "sets"
-	TIMER   = "timers"
+	Prefix  = "hemera"
+	Counter = "counters"
+	Gauge   = "gauges"
+	Set     = "sets"
+	Timer   = "timers"
 )
 
 // Graphite implementation of backend interface
 type Graphite struct {
-	Addr string
+	Addr   string
+	Logger *log.Logger
 }
 
 // Purge implements backend interface
-func (g *Graphite) Purge(c *cache.Cache) error {
-	now := time.Now().Unix()
-
+//
+// FIXME: Function 'Purge' has too many statements (48 > 40) (funlen)
+func (g *Graphite) Purge(c *cache.Cache) (err error) {
 	if c.Seen == 0 {
 		return nil
 	}
@@ -34,8 +35,10 @@ func (g *Graphite) Purge(c *cache.Cache) error {
 	// concatenated buffer to hold all metrics
 	var buffer strings.Builder
 
+	now := time.Now().Unix()
+
 	for name, value := range c.Counters {
-		fullName := fmt.Sprintf("%s.%s.%s", PREFIX, COUNTER, name)
+		fullName := fmt.Sprintf("%s.%s.%s", Prefix, Counter, name)
 		metric := metricString(fullName, value, now)
 		_, err := buffer.WriteString(metric)
 		if err != nil {
@@ -44,7 +47,7 @@ func (g *Graphite) Purge(c *cache.Cache) error {
 	}
 
 	for name, value := range c.Gauges {
-		fullName := fmt.Sprintf("%s.%s.%s", PREFIX, GAUGE, name)
+		fullName := fmt.Sprintf("%s.%s.%s", Prefix, Gauge, name)
 		metric := metricString(fullName, value, now)
 		_, err := buffer.WriteString(metric)
 		if err != nil {
@@ -53,7 +56,7 @@ func (g *Graphite) Purge(c *cache.Cache) error {
 	}
 
 	for name, value := range c.Sets {
-		fullName := fmt.Sprintf("%s.%s.%s", PREFIX, COUNTER, name)
+		fullName := fmt.Sprintf("%s.%s.%s", Prefix, Counter, name)
 		key := fullName + ".count"
 		n := float64(len(value))
 
@@ -64,10 +67,11 @@ func (g *Graphite) Purge(c *cache.Cache) error {
 			return err
 		}
 	}
-	// need to call timerstats to aggregate timer metrics
+
+	// need to call TimerStats to aggregate timer metrics
 	stats := c.TimerStats()
 	for name, value := range stats {
-		fullName := fmt.Sprintf("%s.%s.%s", PREFIX, TIMER, name)
+		fullName := fmt.Sprintf("%s.%s.%s", Prefix, Timer, name)
 		metric := metricString(fullName, value, now)
 		_, err := buffer.WriteString(metric)
 		if err != nil {
@@ -75,10 +79,10 @@ func (g *Graphite) Purge(c *cache.Cache) error {
 		}
 	}
 
-	seen := fmt.Sprintf("%s.seen", PREFIX)
+	seen := fmt.Sprintf("%s.seen", Prefix)
 	seenMetric := metricString(seen, float64(c.Seen), now)
 
-	_, err := buffer.WriteString(seenMetric)
+	_, err = buffer.WriteString(seenMetric)
 	if err != nil {
 		return err
 	}
@@ -88,10 +92,16 @@ func (g *Graphite) Purge(c *cache.Cache) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		if errClose := conn.Close(); err == nil {
+			err = errClose
+		}
+	}()
 
 	// write string buffer
-	log.Printf("pushing %s", buffer.String())
+	if g.Logger != nil {
+		g.Logger.Printf("pushing %s", buffer.String())
+	}
 	_, err = conn.Write([]byte(buffer.String()))
 	if err != nil {
 		return err
