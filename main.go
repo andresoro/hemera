@@ -14,7 +14,7 @@ type config struct {
 	graphitePort string
 	serverHost   string
 	serverPort   string
-	purge        int
+	purge        time.Duration
 }
 
 func configure() *config {
@@ -22,7 +22,7 @@ func configure() *config {
 	flag.StringVar(&cfg.graphitePort, "g", "2003", "graphite server port specifies where to purge metrics")
 	flag.StringVar(&cfg.serverHost, "s", "localhost", "host for hemera server")
 	flag.StringVar(&cfg.serverPort, "p", "8484", "port to listen for metrics")
-	flag.IntVar(&cfg.purge, "t", 10, "interval for purging metrics to graphite in seconds")
+	flag.DurationVar(&cfg.purge, "t", 10*time.Second, "interval for purging metrics to graphite in seconds")
 
 	flag.Parse()
 	return &cfg
@@ -32,9 +32,7 @@ func main() {
 	cfg := configure()
 	graphite := &backend.Graphite{Addr: fmt.Sprintf("localhost:%s", cfg.graphitePort)}
 
-	purgeTime := time.Duration(cfg.purge) * time.Second
-
-	srv, err := server.New(purgeTime, cfg.serverHost, cfg.serverPort, graphite)
+	srv, err := server.New(cfg.purge, cfg.serverHost, cfg.serverPort, graphite)
 	if err != nil {
 		log.Fatal(err)
 	}
