@@ -28,21 +28,20 @@ type Cache struct {
 // New - return a fresh cache
 func New() *Cache {
 	c := &Cache{
-		Counters: make(map[string]float64, 0),
-		Gauges:   make(map[string]float64, 0),
-		Timers:   make(map[string][]float64, 0),
+		Counters: make(map[string]float64),
+		Gauges:   make(map[string]float64),
+		Timers:   make(map[string][]float64),
 		Sets:     make(map[string]map[int64]struct{}),
 
-		Seen:       int64(0),
-		badMetrics: int64(0),
+		Seen:       0,
+		badMetrics: 0,
 	}
 
 	return c
 }
 
 // Add handles a metric and increments or adds to the bucket
-func (c *Cache) Add(m *metric.Metric) error {
-
+func (c *Cache) Add(m *metric.Metric) {
 	c.Seen++
 
 	// handle each metric type
@@ -52,15 +51,13 @@ func (c *Cache) Add(m *metric.Metric) error {
 		value := m.Value
 
 		if m.Rate > 0 {
-			value = value * m.Rate
+			value *= m.Rate
 		}
 
-		// if name counter exists for this name exists
-		if _, ok := c.Counters[name]; ok {
-			c.Counters[name] += value
-		} else {
-			c.Counters[name] = value
+		if _, ok := c.Counters[name]; !ok {
+			c.Counters[name] = 0
 		}
+		c.Counters[name] += value
 
 	case metric.Gauge:
 		name := m.Name
@@ -73,12 +70,10 @@ func (c *Cache) Add(m *metric.Metric) error {
 		value := m.Value
 
 		// check existence for this metric name and append or create a new array
-		if _, ok := c.Timers[name]; ok {
-			c.Timers[name] = append(c.Timers[name], value)
-		} else {
+		if _, ok := c.Timers[name]; !ok {
 			c.Timers[name] = make([]float64, 0)
-			c.Timers[name] = append(c.Timers[name], value)
 		}
+		c.Timers[name] = append(c.Timers[name], value)
 
 	case metric.Set:
 		name := m.Name
@@ -88,13 +83,10 @@ func (c *Cache) Add(m *metric.Metric) error {
 			set[value] = struct{}{}
 		}
 	}
-
-	return nil
 }
 
 // Clear - Set this cache to be a fresh cache with no entries
 func (c *Cache) Clear() {
-
 	c.Seen = 0
 	c.badMetrics = 0
 
@@ -140,8 +132,7 @@ func (c *Cache) TimerStats() map[string]float64 {
 	timerData := make(map[string]float64)
 	var sum float64
 
-	for metric, times := range c.Timers {
-
+	for value, times := range c.Timers {
 		sort.Float64s(times)
 
 		count := float64(len(times))
@@ -154,13 +145,13 @@ func (c *Cache) TimerStats() map[string]float64 {
 		median := percentile(times, count, 0.5)
 		upper95 := percentile(times, count, 0.95)
 
-		timerData[fmt.Sprintf("%s.min", metric)] = times[0]
-		timerData[fmt.Sprintf("%s.max", metric)] = times[len(times)-1]
-		timerData[fmt.Sprintf("%s.count", metric)] = count
-		timerData[fmt.Sprintf("%s.average", metric)] = average
-		timerData[fmt.Sprintf("%s.std_dev", metric)] = stdDev
-		timerData[fmt.Sprintf("%s.median", metric)] = median
-		timerData[fmt.Sprintf("%s.upper_95", metric)] = upper95
+		timerData[fmt.Sprintf("%s.min", value)] = times[0]
+		timerData[fmt.Sprintf("%s.max", value)] = times[len(times)-1]
+		timerData[fmt.Sprintf("%s.count", value)] = count
+		timerData[fmt.Sprintf("%s.average", value)] = average
+		timerData[fmt.Sprintf("%s.std_dev", value)] = stdDev
+		timerData[fmt.Sprintf("%s.median", value)] = median
+		timerData[fmt.Sprintf("%s.upper_95", value)] = upper95
 	}
 
 	c.TimerData = timerData
