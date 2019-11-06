@@ -23,6 +23,7 @@ type Cache struct {
 	TimerData  map[string]float64
 	Seen       int64
 	badMetrics int64
+	mu         *sync.Mutex
 }
 
 // New - return a fresh cache
@@ -35,6 +36,7 @@ func New() *Cache {
 
 		Seen:       0,
 		badMetrics: 0,
+		mu:         &sync.Mutex{},
 	}
 
 	return c
@@ -87,6 +89,9 @@ func (c *Cache) Add(m *metric.Metric) {
 
 // Clear - Set this cache to be a fresh cache with no entries
 func (c *Cache) Clear() {
+
+	c.mu.Lock()
+
 	c.Seen = 0
 	c.badMetrics = 0
 
@@ -125,6 +130,8 @@ func (c *Cache) Clear() {
 	}()
 
 	wg.Wait()
+
+	c.mu.Unlock()
 }
 
 // TimerStats will aggregate all the Timers and compute individual statistics
