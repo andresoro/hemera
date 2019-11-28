@@ -162,6 +162,7 @@ srv.Run()
 
 ## To Do
 
+* Actually tackle to-dos
 * Add support for incrementing/decrementing gauges with '+' or '-' signs in metric value. 
 * Benchmark tests
 * Better logging
